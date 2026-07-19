@@ -44,3 +44,7 @@ sysinfo.txt
 
 # Large output (optional: keep CSV/plot if you want them in the repo)
 # RunData.csv
+
+# 録画動画（提出はforms経由のためリポジトリには入れない。入れたければ次行を消す）
+*.mp4
+*.mov
