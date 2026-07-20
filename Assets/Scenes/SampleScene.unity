@@ -2511,10 +2511,11 @@ MonoBehaviour:
   fixedTimestep: 0
   maxCompositeAccel: 0
   avgCompositeAccel: 0
-  maxSpeed: 1.5
+  maxSpeed: 0
   maxAngularVel: 0
   maxJerkMeasured: 0
   verboseLog: 0
+  csvInterval: 0.02
 --- !u!136 &1869614475
 CapsuleCollider:
   m_ObjectHideFlags: 0

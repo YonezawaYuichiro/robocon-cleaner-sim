@@ -200,6 +200,17 @@ public class RobotController : MonoBehaviour
         yawInertia = rb.inertiaTensor.y;          // ヨー方向の慣性を実測（トルク計算に使う）
         if (yawInertia <= 1e-4f || float.IsNaN(yawInertia)) yawInertia = 0.1f; // 変な値なら安全な既定値
 
+        // 計測値・進行状態を必ず0から始める（Inspectorに古い値が残っていても上書きされる）
+        maxCompositeAccel = 0f;
+        avgCompositeAccel = 0f;
+        maxSpeed = 0f;
+        maxAngularVel = 0f;
+        maxJerkMeasured = 0f;
+        elapsedTime = 0f;
+        currentCommandIndex = 0;
+        currentPhase = "待機";
+        timing = false;
+
         BuildCommands();                          // 順路（命令リスト）を作る
         segmentStartPos = rb.worldCenterOfMass;   // 最初の区間の起点位置
         segmentStartAngle = transform.eulerAngles.y; // 最初の区間の起点角度
@@ -495,6 +506,8 @@ public class RobotController : MonoBehaviour
         camAccel.y = 0f; // 水平成分のみ（重力は含めない）… 上下成分を捨てる
         float aMag = camAccel.magnitude;                 // 水平合成加速度の大きさ
         float jerk = ((camAccel - camAccelPrev) / dt).magnitude; // ジャーク＝加速度の変化 ÷ 時間
+        // 速度は水平成分のみで測る（起動直後の床への“はね”＝上下速度の一瞬のスパイクを除外）
+        float horizSpeed = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z).magnitude;
 
         if (measureWarmup > 0)
         {
@@ -504,7 +517,7 @@ public class RobotController : MonoBehaviour
         {
             // 最大値は全区間で監視（1.0制約の証明）
             maxCompositeAccel = Mathf.Max(maxCompositeAccel, aMag);
-            maxSpeed = Mathf.Max(maxSpeed, rb.linearVelocity.magnitude);
+            maxSpeed = Mathf.Max(maxSpeed, horizSpeed);
             maxAngularVel = Mathf.Max(maxAngularVel, Mathf.Abs(CurrentYawRateDeg()));
             maxJerkMeasured = Mathf.Max(maxJerkMeasured, jerk);
 
@@ -527,7 +540,7 @@ public class RobotController : MonoBehaviour
                 csvTimer -= csvInterval;                   // 次の記録まで待つ
                 // 1行＝時刻・走破時間・計測中フラグ・状態・加速度・速度・角速度・ジャーク
                 csvRows.Add($"{simTime:F3},{elapsedTime:F3},{(timing ? 1 : 0)},{currentPhase}," +
-                            $"{aMag:F4},{rb.linearVelocity.magnitude:F4},{CurrentYawRateDeg():F3},{jerk:F3}");
+                            $"{aMag:F4},{horizSpeed:F4},{CurrentYawRateDeg():F3},{jerk:F3}");
             }
         }
 
